@@ -1,8 +1,9 @@
 # Builds the desktop app for Windows and macOS and attaches both to a Release.
 #
-# macOS artifacts CANNOT be produced on Windows or Linux — electron-builder
-# needs a real Mac for the .dmg and signing steps — which is the whole reason
-# this workflow exists. Push a tag and GitHub's macOS runner does it for you.
+# macOS artifacts CANNOT be produced on Windows or Linux, because
+# electron-builder needs a real Mac for the .dmg and signing steps. That is the
+# whole reason this workflow exists. Push a tag and GitHub's macOS runner does
+# it for you.
 #
 #   git tag v0.3.0
 #   git push origin v0.3.0
