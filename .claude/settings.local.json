@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip --version)",
+      "Read(//c/Users/mvspa/Downloads//**)",
+      "Bash(pip install *)",
+      "Bash(npm --version)",
+      "Bash(mkdir -p \"/c/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad/preview\")",
+      "Bash(cat)",
+      "Bash(python __TRACKED_VAR__/render_preview.py /c/Users/mvspa/Downloads/questionbank-export-2026-7-17.pdf __TRACKED_VAR__/preview/pdfA 1 8)",
+      "Bash(python __TRACKED_VAR__/render_preview.py '/c/Users/mvspa/Downloads/questionbank-export-2026-7-17 \\(1\\).pdf' __TRACKED_VAR__/preview/pdfB 1 8)",
+      "Bash(SCRATCH=\"/c/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad\" *)",
+      "Bash(python /c/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad/inspect_text.py /c/Users/mvspa/Downloads/questionbank-export-2026-7-17.pdf 1 4)",
+      "Bash(python /c/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad/inspect_text.py '/c/Users/mvspa/Downloads/questionbank-export-2026-7-17 \\(1\\).pdf' 1 4)",
+      "Read(//c/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad/**)",
+      "Bash(python /c/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad/inspect_text.py /c/Users/mvspa/Downloads/questionbank-export-2026-7-17.pdf 8 8)",
+      "Bash(python /c/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad/inspect_page8.py)",
+      "Bash(python /c/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad/inspect_text.py /c/Users/mvspa/Downloads/questionbank-export-2026-7-17.pdf 7 7)",
+      "Bash(python /c/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad/inspect_page2.py)",
+      "Bash(python -c \"import fitz; print\\('pymupdf', fitz.__version__ if hasattr\\(fitz,'__version__'\\) else fitz.version\\)\")",
+      "Bash(python /c/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad/census.py)",
+      "Bash(node \"C:/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad/fix-server.js\")",
+      "Bash(node --check \"C:/Users/mvspa/Documents/RankedSat/app/server.js\")",
+      "Bash(python /c/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad/flagtest.py)",
+      "Bash(node --check server.js)",
+      "Bash(node --check test-duel.js)",
+      "Bash(node --check public/client.js)",
+      "Bash(node -e ' *)",
+      "Bash(npm install *)",
+      "Bash(python /c/Users/mvspa/AppData/Local/Temp/claude/C--Users-mvspa-Documents-RankedSat/e6b4a5ba-8e40-4422-892a-9ab67b74e07d/scratchpad/flagtest2.py)",
+      "Bash(npm ls *)",
+      "Bash(python -c ' *)",
+      "Bash(python)",
+      "Bash(node server.js)",
+      "Bash(curl -s -o /dev/null -w \"GET / -> %{http_code} \\(%{size_download} bytes\\)\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s http://localhost:3000/api/health)",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"socket.io client -> %{http_code}\\\\n\" http://localhost:3000/socket.io/socket.io.js)",
+      "Bash(python scripts/parse_questionbank.py)"
+    ]
+  }
+}

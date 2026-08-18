@@ -1,0 +1,102 @@
+{
+  "name": "rankedsat",
+  "version": "0.3.0",
+  "private": true,
+  "description": "RankedSat — 1v1 ranked SAT duels and solo study. Express + socket.io server, React client, Electron desktop shell.",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:duel": "node test-duel.js",
+    "desktop": "npm run build && electron .",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "firebase-admin": "^13.0.0",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "socket.io-client": "^4.7.5",
+    "vite": "^5.4.11"
+  },
+  "build": {
+    "appId": "com.rankedsat.app",
+    "productName": "RankedSat",
+    "directories": {
+      "output": "../dist-desktop"
+    },
+    "files": [
+      "electron/**",
+      "server.js",
+      "rules.js",
+      "storage.js",
+      "sample-questions.jsonl",
+      "public/**",
+      "legacy/**",
+      "package.json",
+      "node_modules/**",
+      "!node_modules/firebase-admin/**",
+      "!node_modules/@firebase/**",
+      "!node_modules/@google-cloud/**",
+      "!node_modules/protobufjs/**",
+      "!node_modules/.bin/**"
+    ],
+    "extraResources": [
+      {
+        "from": "../data",
+        "to": "data",
+        "filter": [
+          "questions.jsonl",
+          "figures/**"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "artifactName": "RankedSat-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "RankedSat-Portable-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.education",
+      "artifactName": "RankedSat-${version}-${arch}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Education"
+    }
+  }
+}

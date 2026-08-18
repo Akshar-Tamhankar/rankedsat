@@ -1,0 +1,4 @@
+# Question-bank ingestion pipeline (scripts/parse_questionbank.py).
+# Not needed to run the game — only to re-parse College Board exports.
+PyMuPDF>=1.24
+Pillow>=10.0

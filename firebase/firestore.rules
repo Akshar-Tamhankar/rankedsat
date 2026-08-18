@@ -1,0 +1,61 @@
+rules_version = '2';
+
+// RankedSat security rules.
+//
+// Principles:
+//  - Clients NEVER write anything that affects competition: ratings, records,
+//    queue pairing, match state, and grading happen only in Cloud Functions
+//    (Admin SDK bypasses these rules).
+//  - Match docs are readable ONLY by their two participants. During play they
+//    contain public question projections (no correct answers / rationales);
+//    the answer key reaches the doc only at finalization, as the review.
+//  - Per-player private docs (own answers + correctness) are readable only by
+//    that player, so an opponent can never read your correctness mid-match.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- users: public leaderboard fields; own displayName is the only
+    //     client-writable field (ratings/records only via Admin SDK) ---------
+    match /users/{uid} {
+      allow get, list: if true;
+      allow create, delete: if false;
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['displayName', 'lastSeen'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 1
+        && request.resource.data.displayName.size() <= 20;
+    }
+
+    // --- queue: own doc only — read (to learn your matchId) and delete
+    //     (to cancel). Creation/pairing happens in the joinQueue function. ---
+    match /queue/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list: if false;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if false;
+    }
+
+    // --- matches: participants only; never client-writable ------------------
+    match /matches/{matchId} {
+      allow get: if request.auth != null
+        && request.auth.uid in resource.data.participants;
+      allow list: if false;
+      allow create, update, delete: if false;
+
+      // Per-player private state: own doc only (opponent must not see your
+      // correctness before the match ends).
+      match /private/{uid} {
+        allow get: if request.auth != null && request.auth.uid == uid;
+        allow list: if false;
+        allow create, update, delete: if false;
+      }
+    }
+
+    // --- everything else: denied --------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

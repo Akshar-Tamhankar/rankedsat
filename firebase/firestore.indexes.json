@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "queue",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "queue", "order": "ASCENDING" },
+        { "fieldPath": "joinedAtMs", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

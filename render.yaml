@@ -1,0 +1,35 @@
+# RankedSat on Render.
+#
+# PERSISTENCE — pick ONE, or ratings reset on every redeploy:
+#
+#   A) Firestore (works on the free plan). Set FIREBASE_SERVICE_ACCOUNT to the
+#      full service-account JSON; storage.js switches backends automatically.
+#      Leave the `disk:` block below commented out.
+#
+#   B) A mounted disk (requires a paid instance — the free plan has no disks).
+#      Uncomment `disk:` below and leave FIREBASE_SERVICE_ACCOUNT unset.
+#
+# With neither, the server writes players.json inside the container and logs a
+# loud warning at boot, because that data disappears on restart.
+services:
+  - type: web
+    name: rankedsat
+    runtime: docker
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      # Set this to lock the site behind an access code. It gates socket play,
+      # the APIs, and /figures (the question images). Leave unset for an open
+      # instance.
+      - key: RANKEDSAT_ACCESS_CODE
+        sync: false
+      # Option A — full service-account JSON, enables Firestore persistence.
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+
+    # Option B — persistent disk. Requires a paid plan; mountPath must match
+    # RANKEDSAT_STATE_DIR (/data) from the Dockerfile.
+    # disk:
+    #   name: rankedsat-state
+    #   mountPath: /data
+    #   sizeGB: 1

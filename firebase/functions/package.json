@@ -1,0 +1,13 @@
+{
+  "name": "rankedsat-functions",
+  "description": "RankedSat Cloud Functions match engine",
+  "private": true,
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^5.1.1"
+  }
+}

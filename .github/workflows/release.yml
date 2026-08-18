@@ -1,0 +1,95 @@
+# Builds the desktop app for Windows and macOS and attaches both to a Release.
+#
+# macOS artifacts CANNOT be produced on Windows or Linux — electron-builder
+# needs a real Mac for the .dmg and signing steps — which is the whole reason
+# this workflow exists. Push a tag and GitHub's macOS runner does it for you.
+#
+#   git tag v0.3.0
+#   git push origin v0.3.0
+#
+# Or run it by hand from the Actions tab (workflow_dispatch).
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            script: dist:win
+            artifact: windows
+          - os: macos-latest
+            script: dist:mac
+            artifact: macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The question bank and figures are large; make sure LFS objects
+          # (if you ever enable LFS) come down too.
+          lfs: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Build desktop app
+        working-directory: app
+        # Unsigned builds: no Apple Developer account. Users right-click →
+        # Open on first launch (documented in the README).
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npm run ${{ matrix.script }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rankedsat-${{ matrix.artifact }}
+          path: |
+            dist-desktop/*.exe
+            dist-desktop/*.dmg
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/**/*.exe
+            artifacts/**/*.dmg
+          generate_release_notes: true
+          body: |
+            ## Downloads
+
+            | Platform | File |
+            | --- | --- |
+            | Windows (installer) | `RankedSat-Setup-*-x64.exe` |
+            | Windows (portable) | `RankedSat-Portable-*-x64.exe` |
+            | macOS (Apple Silicon) | `RankedSat-*-arm64.dmg` |
+            | macOS (Intel) | `RankedSat-*-x64.dmg` |
+
+            Builds are unsigned. On macOS, right-click the app → **Open** the
+            first time. On Windows, choose **More info → Run anyway** if
+            SmartScreen appears.

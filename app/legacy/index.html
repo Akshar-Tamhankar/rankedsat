@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RankedSat — 1v1 SAT Duels (local test)</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="topbar">
+    <div class="brand">Ranked<span class="brand-accent">Sat</span> <span class="build-tag">local test</span></div>
+    <nav aria-label="Main">
+      <button id="navLobby" class="nav-btn" type="button">Lobby</button>
+      <button id="navLeaderboard" class="nav-btn" type="button">Leaderboard</button>
+    </nav>
+    <div id="connStatus" class="conn-status" role="status">Connecting…</div>
+  </header>
+
+  <div id="announcer" class="visually-hidden" aria-live="polite"></div>
+  <div id="alertRegion" class="visually-hidden" role="alert"></div>
+
+  <!-- ============ PRIVATE BETA GATE ============ -->
+  <!-- Only shown when the server has an access code configured. Covers the
+       whole page so nothing behind it (lobby, sockets) is reachable without
+       a valid code. -->
+  <div id="view-gate" class="gate-overlay" hidden>
+    <div class="card center-card">
+      <h1 id="gateHeading">This beta is invite-only</h1>
+      <p class="hint">Enter your access code to continue.</p>
+      <div class="field">
+        <label for="gateInput">Access code</label>
+        <div class="name-row">
+          <input id="gateInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <button id="gateSubmitBtn" class="primary" type="button">Enter</button>
+        </div>
+      </div>
+      <p id="gateError" class="gate-error" role="alert"></p>
+    </div>
+  </div>
+
+  <main id="main">
+
+    <!-- ============ LOBBY ============ -->
+    <section id="view-lobby" class="view" hidden>
+      <div class="lobby-grid">
+        <div class="card">
+          <h1>Queue for a duel</h1>
+          <div class="field">
+            <label for="nameInput">Display name</label>
+            <div class="name-row">
+              <input id="nameInput" maxlength="20" autocomplete="nickname">
+              <button id="saveNameBtn" type="button">Save</button>
+            </div>
+            <p class="hint" id="nameHint">Playing as <strong id="playingAs">…</strong>. Testing solo in two windows? Give each window a different name.</p>
+          </div>
+
+          <fieldset class="field">
+            <legend>Queue</legend>
+            <div class="radio-cards" id="queueCards">
+              <label class="radio-card"><input type="radio" name="queue" value="ela" checked>
+                <span class="rc-title">ELA</span><span class="rc-sub">Reading &amp; Writing</span></label>
+              <label class="radio-card"><input type="radio" name="queue" value="math-desmos">
+                <span class="rc-title">Math (Desmos)</span><span class="rc-sub">Calculator allowed</span></label>
+              <label class="radio-card"><input type="radio" name="queue" value="math-nocalc">
+                <span class="rc-title">Math (No Desmos)</span><span class="rc-sub">No calculator</span></label>
+            </div>
+          </fieldset>
+          <p class="hint">Question difficulty adapts to you and your opponent’s ratings, and the whole match runs on one countdown clock (5:00, or 7:00 in high-rated matches).</p>
+
+          <button id="findBtn" class="primary big" type="button">Find opponent</button>
+          <p class="hint">No opponent within 10 seconds? A clearly-labeled practice bot (“Ghost Bot”) joins so you can still duel. Bot matches are rated in this test build.</p>
+        </div>
+
+        <div class="card side">
+          <h2>Your ratings</h2>
+          <dl class="ratings">
+            <div><dt>ELA</dt><dd><span id="ratingEla">1000</span> <span class="muted" id="gamesEla">(0 games)</span></dd></div>
+            <div><dt>Math</dt><dd><span id="ratingMath">1000</span> <span class="muted" id="gamesMath">(0 games)</span></dd></div>
+            <div><dt>Record</dt><dd id="recordLine">0W – 0L – 0D</dd></div>
+          </dl>
+          <p class="hint">Both math queues share one Math rating. Everyone starts at 1000. Stakes scale with the rating gap: an even match is worth &plusmn;30, a big mismatch as little as &plusmn;2.</p>
+          <button id="lbLink" class="link-btn" type="button">View leaderboard →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ QUEUE / SEARCHING ============ -->
+    <section id="view-queue" class="view" hidden>
+      <div class="card center-card">
+        <h1>Finding an opponent…</h1>
+        <div class="search-ring" aria-hidden="true"></div>
+        <p id="queueInfo" class="muted"></p>
+        <p>Elapsed: <span id="queueElapsed">0:00</span></p>
+        <p class="hint">If nobody joins within 10 seconds, <strong>Ghost Bot</strong> (practice bot, ~60% accuracy) steps in.</p>
+        <button id="cancelQueueBtn" type="button">Cancel</button>
+      </div>
+    </section>
+
+    <!-- ============ MATCH ============ -->
+    <section id="view-match" class="view" hidden>
+      <div class="match-top" role="banner">
+        <div class="mt-you">
+          <span class="mt-name" id="youName">You</span>
+          <span class="pips" id="youPips" aria-label="Your progress"></span>
+        </div>
+        <div class="mt-center">
+          <span class="qcount">Q <span id="qNum">1</span>/<span id="qTotal">5</span></span>
+          <button id="timerToggle" type="button" aria-pressed="false" title="Show or hide the match clock (T)">
+            <span aria-hidden="true">&#9202;</span> <span id="timerText">5:00</span>
+          </button>
+          <span id="stakeChip" class="stake-chip" hidden></span>
+        </div>
+        <div class="mt-opp">
+          <span class="mt-name" id="oppName">Opponent</span>
+          <span class="pips" id="oppPips" aria-label="Opponent progress"></span>
+          <span id="oppBotTag" class="bot-tag" hidden>BOT</span>
+        </div>
+      </div>
+
+      <div id="matchBanner" class="match-banner" hidden></div>
+
+      <div class="qframe" id="qframe">
+        <div class="pane passage-pane" id="passagePane" hidden>
+          <div class="pane-label">Passage</div>
+          <div id="passageText" class="passage-text"></div>
+        </div>
+        <div class="pane question-pane">
+          <div class="qmeta">
+            <span id="qDiff" class="diff-chip"></span>
+            <span id="qDomain" class="muted"></span>
+          </div>
+          <div id="stem" class="stem" tabindex="-1"></div>
+          <figure id="stemImageWrap" class="stem-image" hidden>
+            <img id="stemImg" alt="Math question (see image)" tabindex="-1">
+          </figure>
+          <figure id="figureWrap" hidden>
+            <img id="figureImg" alt="Figure for this question">
+          </figure>
+
+          <div id="choices" class="choices" role="group" aria-label="Answer choices"></div>
+
+          <div id="sprWrap" class="spr-wrap" hidden>
+            <label for="sprInput">Your answer (number or fraction)</label>
+            <input id="sprInput" inputmode="decimal" autocomplete="off">
+            <p id="sprEcho" class="hint" aria-live="polite"></p>
+          </div>
+
+          <div id="lockedNote" class="locked-note" hidden aria-live="polite"></div>
+          <div id="waitingNote" class="waiting-note" hidden>
+            <h2 id="wnTitle">All done!</h2>
+            <p id="wnText">Waiting for your opponent to finish…</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="match-bottom">
+        <button id="flagBtn" type="button" aria-pressed="false" title="Flag this question (F)">&#9873; Flag</button>
+        <button id="crossBtn" type="button" aria-pressed="false" title="Cross-out mode: eliminate choices (X)">&#10683; Cross-out</button>
+        <button id="calcBtn" type="button" hidden aria-pressed="false" title="Toggle Desmos calculator (C)">&#128425; Calculator</button>
+        <span class="mb-spacer"></span>
+        <span class="kbd-hint muted">1–4 / A–D select · Enter submit · X cross-out · F flag</span>
+        <button id="submitBtn" class="primary" type="button" disabled>Submit</button>
+        <button id="quitMatchBtn" type="button" class="danger-link" title="Forfeit and leave">Forfeit</button>
+      </div>
+
+      <aside id="calcPanel" class="calc-panel" hidden aria-label="Desmos graphing calculator">
+        <div class="calc-head">
+          <span>Desmos calculator</span>
+          <button id="calcCloseBtn" type="button" aria-label="Close calculator">✕</button>
+        </div>
+        <div id="calcHost" class="calc-host"></div>
+        <p id="calcFallback" class="calc-fallback" hidden>Calculator unavailable offline — the Desmos script could not be loaded.</p>
+      </aside>
+    </section>
+
+    <!-- ============ RESULTS ============ -->
+    <section id="view-results" class="view" hidden>
+      <div class="card results-card">
+        <h1 id="resultHeadline" tabindex="-1">Result</h1>
+        <p id="forfeitNote" class="forfeit-note" hidden></p>
+
+        <div class="score-strip">
+          <div class="ss-side">
+            <div class="ss-name" id="resYouName">You</div>
+            <div class="ss-score" id="resYouScore">0</div>
+            <div class="muted" id="resYouLine"></div>
+          </div>
+          <div class="ss-vs">vs</div>
+          <div class="ss-side">
+            <div class="ss-name" id="resOppName">Opponent</div>
+            <div class="ss-score" id="resOppScore">0</div>
+            <div class="muted" id="resOppLine"></div>
+          </div>
+        </div>
+
+        <p id="ratingLine" class="rating-line"></p>
+        <p id="botRatedNote" class="hint" hidden>Bot matches are rated in this local test build only.</p>
+
+        <h2>Question review</h2>
+        <div id="reviewList" class="review-list"></div>
+
+        <div class="results-actions">
+          <button id="rematchBtn" class="primary" type="button">Rematch</button>
+          <button id="lobbyBtn" type="button">Back to lobby</button>
+        </div>
+        <p id="rematchStatus" class="hint" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- ============ LEADERBOARD ============ -->
+    <section id="view-leaderboard" class="view" hidden>
+      <div class="card">
+        <h1>Leaderboard</h1>
+        <div class="lb-tabs" role="tablist" aria-label="Leaderboard section">
+          <button id="lbTabEla" class="lb-tab" role="tab" aria-selected="true" type="button">ELA</button>
+          <button id="lbTabMath" class="lb-tab" role="tab" aria-selected="false" type="button">Math</button>
+        </div>
+        <table class="lb-table">
+          <thead><tr><th scope="col">#</th><th scope="col">Player</th><th scope="col">Rating</th><th scope="col">Games</th><th scope="col">W–L–D</th></tr></thead>
+          <tbody id="lbBody"></tbody>
+        </table>
+        <p id="lbEmpty" class="hint" hidden>No rated players yet — play a duel to appear here.</p>
+        <button id="lbBackBtn" type="button">← Back to lobby</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/client.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "rankedsat-firebase",
+  "description": "RankedSat Firebase deployment root (hosting + functions + rules)",
+  "private": true,
+  "scripts": {
+    "build-data": "node scripts/build-data.js",
+    "test:logic": "node test-logic.js",
+    "test:emu": "firebase emulators:exec --project demo-rankedsat --only auth,functions,firestore,hosting \"node test-duel-emu.js\"",
+    "emulators": "firebase emulators:start --project demo-rankedsat",
+    "deploy": "firebase deploy"
+  },
+  "devDependencies": {
+    "firebase": "^10.14.1",
+    "firebase-tools": "^13.35.1"
+  }
+}

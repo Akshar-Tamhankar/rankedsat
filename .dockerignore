@@ -1,0 +1,18 @@
+# Dependencies are installed fresh in the image via `npm ci`.
+**/node_modules
+
+# Mutable state — never bake player data into the image; it belongs on the
+# mounted volume at /data in production.
+data/players.json
+data/players.json.tmp
+data/players.json.corrupt-*
+
+# Not needed at runtime.
+docs/
+scripts/
+*.pdf
+
+# Local/dev cruft.
+.git
+.gitignore
+RankedSat.bat

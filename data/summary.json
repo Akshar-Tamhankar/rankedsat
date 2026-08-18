@@ -1,0 +1,46 @@
+{
+  "totalParsed": 3714,
+  "addedThisRun": 270,
+  "mode": "merge",
+  "sourcePdfs": [
+    "questionbank-export-2026-8-15.pdf",
+    "questionbank-export-2026-8-15 (1).pdf"
+  ],
+  "bySection": {
+    "math": 1876,
+    "ela": 1838
+  },
+  "byDifficulty": {
+    "hard": 1218,
+    "easy": 1288,
+    "medium": 1208
+  },
+  "byDomain": {
+    "Algebra": 605,
+    "Advanced Math": 528,
+    "Geometry and Trigonometry": 335,
+    "Problem-Solving and Data Analysis": 408,
+    "Information and Ideas": 554,
+    "Standard English Conventions": 417,
+    "Expression of Ideas": 398,
+    "Craft and Structure": 469
+  },
+  "byType": {
+    "spr": 451,
+    "mcq": 3263
+  },
+  "hasFigure": {
+    "true": 450,
+    "false": 3264
+  },
+  "figurePathSet": 450,
+  "mathStemImages": 1876,
+  "mathStemImageMissing": [],
+  "correctRecoveredFromRationale": 81,
+  "suspect": 1,
+  "violations": {},
+  "missingCorrectIds": [],
+  "duplicateIdsSkipped": 0,
+  "parseFailures": [],
+  "skippedPages": []
+}

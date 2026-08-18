@@ -1,0 +1,526 @@
+:root{
+  --void:#14100c;
+  --ink:#2a2018;
+  --ink-soft:#5c4b39;
+  --paper:#e4d6ba;
+  --paper-lit:#f2e7ce;
+  --oxblood:#7c2d2d;
+  --oxblood-lit:#a34141;
+  --brass:#b3924f;
+  --brass-lit:#d8b877;
+
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;
+  --sans:ui-sans-serif,system-ui,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+
+  --panel-bg:rgba(238,227,203,.85);
+  --panel-blur:blur(18px) saturate(1.2);
+  --foilx:50%;
+
+  /* One motion system. Everything in the hall picks a duration and an easing
+     from these instead of inventing its own — 11 unrelated ambient loops at
+     arbitrary speeds is a large part of why it read as incoherent. */
+  --ease:cubic-bezier(.22,1,.36,1);   /* settle: camera, panels, zones   */
+  --ease-soft:cubic-bezier(.4,0,.2,1);/* utility: fades, dims, hovers    */
+  --t-fast:.22s;                      /* hover, press                    */
+  --t-mid:.45s;                       /* dim, glow, reveal               */
+  --t-slow:.6s;                       /* zone open/close                 */
+  --breath:6s;                        /* the hall's base pulse           */
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--void);color:var(--paper);
+  font-family:var(--serif);overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+#root{height:100%}
+
+/* ── Viewport / camera ─────────────────────────────────────────────────── */
+.viewport{position:fixed;inset:0;overflow:hidden}
+.stage{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
+
+/* ── Background ────────────────────────────────────────────────────────── */
+.bg{position:absolute;inset:0;overflow:hidden}
+.bg-base{position:absolute;inset:0;
+  background:radial-gradient(120% 90% at 50% 10%,#2c2318 0%,#1d1710 45%,#14100c 100%)}
+/* MEASURED: at inset:-40% with mix-blend-mode this was 3.24 screens of
+   blend work per frame — inside .stage, so it re-rasterised on every zoom
+   frame. It has no animation, so the overscan bought nothing. inset:0 and
+   no blend group; the texture is tuned with plain alpha instead. */
+.bg-grain{position:absolute;inset:0;opacity:.10;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E")}
+.scrap{position:absolute;pointer-events:none;border-radius:3px;
+  background:linear-gradient(150deg,rgba(226,212,183,.10),rgba(226,212,183,.03));
+  animation:drift 46s var(--ease) infinite alternate}
+/* durations are multiples of --breath (6s) so the drifts stay in phase with
+   each other instead of beating against unrelated periods */
+.scrap.s1{left:3%;top:62%;width:34%;height:34%;--r:-4deg;animation-duration:48s}
+.scrap.s2{left:56%;top:6%;width:27%;height:48%;--r:5deg;animation-duration:60s}
+.scrap.s3{left:74%;top:62%;width:24%;height:30%;--r:-7deg;animation-duration:42s}
+.scrap.s4{left:15%;top:4%;width:19%;height:22%;--r:3deg;animation-duration:54s}
+@keyframes drift{
+  from{transform:translate3d(0,0,0) rotate(var(--r,0deg))}
+  to{transform:translate3d(10px,-14px,0) rotate(calc(var(--r,0deg) + 1.2deg))}
+}
+
+/* MEASURED: 5 of these were each promoted to a full-viewport composited
+   layer (5 screens of GPU memory) to carry ~9 small decor items. Merged to
+   3 in the markup; will-change stays because they translate every frame. */
+.plax{position:absolute;inset:0;pointer-events:none;will-change:transform}
+.decor-item{position:absolute;filter:drop-shadow(0 10px 14px rgba(0,0,0,.45))}
+.decor-item svg{display:block;width:100%;height:auto}
+
+/* ── Frame ─────────────────────────────────────────────────────────────── */
+.frame{position:absolute;inset:14px;border-radius:18px;pointer-events:none;z-index:6;
+  border:1px solid rgba(179,146,79,.30);
+  box-shadow:inset 0 0 0 1px rgba(20,16,12,.55),inset 0 0 90px rgba(0,0,0,.55),inset 0 0 240px rgba(0,0,0,.32)}
+.corner{position:absolute;width:74px;height:74px;pointer-events:none;opacity:.55;z-index:6}
+.corner svg{width:100%;height:100%;display:block}
+.corner.tl{left:22px;top:22px}
+.corner.tr{right:22px;top:22px;transform:scaleX(-1)}
+.corner.bl{left:22px;bottom:22px;transform:scaleY(-1)}
+.corner.br{right:22px;bottom:22px;transform:scale(-1,-1)}
+
+.watermark{position:absolute;width:300px;height:300px;pointer-events:none;opacity:.05;color:var(--brass)}
+.watermark .wm-spin{width:100%;height:100%;animation:spin 140s linear infinite}
+.watermark.wm-tl{left:-64px;top:-64px}
+.watermark.wm-br{right:-64px;bottom:-64px}
+.watermark.wm-br .wm-spin{animation-direction:reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Crest ─────────────────────────────────────────────────────────────── */
+.crest{position:absolute;pointer-events:none;display:grid;place-items:center;
+  text-align:center;color:var(--brass);z-index:2}
+.crest .wreath{position:absolute;inset:0;opacity:.5}
+.crest .wreath svg{animation:spin 240s linear infinite}
+.crest .crest-in{position:relative;opacity:.9}
+.crest .mono{font-size:56px;letter-spacing:.06em;line-height:1;opacity:.9;
+  background:linear-gradient(105deg,#8a6c33 0%,var(--brass-lit) calc(var(--foilx) - 18%),#fff3cf var(--foilx),var(--brass-lit) calc(var(--foilx) + 18%),#8a6c33 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.crest .motto{margin-top:12px;font-family:var(--sans);font-size:10px;
+  letter-spacing:.42em;text-transform:uppercase;opacity:.6;color:var(--brass)}
+
+/* ── Zones ─────────────────────────────────────────────────────────────── */
+/* NO opacity and NO perspective on .zone — either isolates the backdrop group
+   and silently disables the panel's backdrop-filter (ghost panels). */
+.zone{position:absolute;z-index:10;padding:22px;outline:none;
+  transition:left .6s var(--ease),top .6s var(--ease),width .6s var(--ease),height .6s var(--ease)}
+.zone.is-open{z-index:40}
+.zone:focus-visible .panel{box-shadow:0 0 0 2px var(--brass-lit),var(--panel-shadow)}
+
+.zglow{position:absolute;inset:-34px;border-radius:40px;pointer-events:none;z-index:0;opacity:0;
+  background:radial-gradient(60% 55% at 50% 45%,rgba(216,184,119,.26),transparent 70%);
+  transition:opacity .45s ease}
+.zone.is-focus .zglow,.zone.is-open .zglow{opacity:1}
+
+/* no will-change: these only move during a tilt, and 4 permanently promoted
+   layers cost memory the whole time for a few hundred ms of motion */
+.zshadow{position:absolute;inset:4% 2% -12% 2%;pointer-events:none;z-index:0;
+  background:radial-gradient(55% 55% at 50% 55%,rgba(0,0,0,.55),transparent 72%);
+  transform:translate3d(0,10px,0)}
+
+.panel{
+  --panel-shadow:0 26px 70px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,244,214,.20),inset 0 -1px 0 rgba(20,16,12,.18);
+  position:relative;width:100%;height:100%;z-index:1;
+  background:var(--panel-bg);
+  -webkit-backdrop-filter:var(--panel-blur);backdrop-filter:var(--panel-blur);
+  border:1px solid rgba(179,146,79,.58);border-radius:18px;
+  box-shadow:var(--panel-shadow);color:var(--ink);padding:22px 24px;overflow:hidden;
+  transition:background .3s ease,border-color .3s ease,box-shadow .35s ease}
+.zone:hover .panel,.zone.is-focus .panel{
+  background:rgba(244,234,212,.92);border-color:rgba(216,184,119,.70);
+  box-shadow:0 26px 70px rgba(0,0,0,.55),0 0 44px rgba(216,184,119,.13),
+             inset 0 1px 0 rgba(255,246,220,.22),inset 0 0 26px rgba(216,184,119,.10)}
+.panel::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:radial-gradient(80% 60% at 18% 8%,rgba(255,246,222,.30),transparent 60%),
+             radial-gradient(60% 50% at 92% 96%,rgba(124,45,45,.10),transparent 60%)}
+
+.sheen{position:absolute;top:-8%;bottom:-8%;left:0;width:46%;pointer-events:none;z-index:3;opacity:0;
+  background:linear-gradient(100deg,transparent,rgba(255,240,200,.30) 50%,transparent);
+  transform:translateX(-160%) skewX(-16deg)}
+/* fires on hover AND on the lean/focus state, so keyboard users get it too */
+.zone:hover .sheen,.zone.is-focus .sheen{animation:sheen 1.05s var(--ease) .04s 1}
+@keyframes sheen{
+  0%{transform:translateX(-160%) skewX(-16deg);opacity:0}
+  14%{opacity:1}
+  100%{transform:translateX(340%) skewX(-16deg);opacity:0}
+}
+
+.dimmer{position:absolute;inset:0;z-index:6;border-radius:inherit;pointer-events:none;
+  background:rgba(26,20,13,.5);opacity:0;transition:opacity .4s ease}
+body.focused .zone:not(.is-focus):not(.is-open) .dimmer{opacity:.45}
+body.focused.opened .zone:not(.is-open) .dimmer{opacity:1}
+
+.zone.is-open .panel{overflow:auto;scrollbar-width:thin;scrollbar-color:rgba(124,45,45,.4) transparent}
+.zone.is-open .sheen{display:none}
+
+.p-head{display:flex;align-items:baseline;gap:10px;font-family:var(--sans);font-size:10px;
+  letter-spacing:.34em;text-transform:uppercase;color:var(--ink-soft);
+  padding-bottom:10px;margin-bottom:14px;border-bottom:1px solid rgba(42,32,24,.16)}
+.p-head .rule{flex:1;height:1px;background:rgba(42,32,24,.14)}
+.p-title{font-size:27px;line-height:1.15;margin:0 0 6px;font-weight:500;letter-spacing:-.01em}
+.p-title.foil{
+  background:linear-gradient(105deg,#6d552a 0%,#a8874a calc(var(--foilx) - 26%),#f0dca5 var(--foilx),#a8874a calc(var(--foilx) + 26%),#6d552a 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.p-sub{margin:0;font-size:14px;color:var(--ink-soft);line-height:1.5}
+.err{margin:10px 0 0;color:var(--oxblood);font-size:13.5px}
+.warn{color:var(--oxblood)}
+.only-open{animation:fadeUp .5s var(--ease) both .12s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ── Placard ───────────────────────────────────────────────────────────── */
+.wax{position:absolute;right:6px;top:6px;width:78px;height:78px;z-index:5;
+  display:grid;place-items:center;color:#f0dcc4;cursor:pointer;
+  font-family:var(--sans);font-size:8px;letter-spacing:.2em;text-transform:uppercase;
+  background:radial-gradient(circle at 34% 30%,var(--oxblood-lit),var(--oxblood) 52%,#521c1c 100%);
+  border-radius:50%;transform:rotate(-9deg);
+  box-shadow:0 6px 16px rgba(0,0,0,.5),inset 0 2px 6px rgba(255,255,255,.18);
+  animation:waxpulse var(--breath) ease-in-out infinite}
+@keyframes waxpulse{
+  0%,100%{box-shadow:0 6px 16px rgba(0,0,0,.5),inset 0 2px 6px rgba(255,255,255,.18)}
+  50%{box-shadow:0 6px 22px rgba(124,45,45,.55),0 0 26px rgba(163,65,65,.35),inset 0 2px 6px rgba(255,255,255,.22)}
+}
+.wax .ripple{position:absolute;inset:-2px;border-radius:50%;opacity:0;pointer-events:none;
+  border:2px solid rgba(216,184,119,.85)}
+.wax .ripple.go{animation:ripple .65s var(--ease) forwards}
+@keyframes ripple{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.1)}}
+
+.field{margin:16px 0}
+.field label{display:block;font-family:var(--sans);font-size:10px;letter-spacing:.26em;
+  text-transform:uppercase;color:var(--ink-soft);margin-bottom:7px}
+.input{width:100%;padding:11px 13px;font-family:var(--serif);font-size:16px;color:var(--ink);
+  background:rgba(255,250,238,.60);border:1px solid rgba(42,32,24,.24);border-radius:9px;outline:none}
+.input:focus{border-color:var(--oxblood);background:rgba(255,250,238,.85)}
+
+.flip{perspective:1200px;margin-top:8px}
+.flip-inner{position:relative;transform-style:preserve-3d;min-height:118px;
+  transition:transform .7s var(--ease)}
+.flip.flipped .flip-inner{transform:rotateY(180deg)}
+.flip-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.flip-back{transform:rotateY(180deg)}
+
+.tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid rgba(42,32,24,.16);padding-bottom:10px}
+.tab{
+  font-family:var(--sans);font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  padding:9px 15px;border-radius:8px;cursor:pointer;color:var(--ink-soft);
+  background:transparent;border:1px solid rgba(42,32,24,.2);
+  transition:background var(--t-fast) var(--ease-soft),border-color var(--t-fast) var(--ease-soft);
+}
+.tab:hover{border-color:var(--ink-soft)}
+.tab.on{background:rgba(124,45,45,.12);border-color:var(--oxblood);color:var(--ink)}
+
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card-opt{position:relative;cursor:pointer;padding:13px 12px 14px;border-radius:10px;
+  background:linear-gradient(rgba(255,252,244,.72),rgba(255,252,244,.72)),
+    repeating-linear-gradient(rgba(0,0,0,0) 0 21px,rgba(80,110,150,.16) 21px 22px);
+  border:1px solid rgba(42,32,24,.20);
+  transition:transform .22s var(--ease),border-color .2s,box-shadow .2s}
+.card-opt::before{content:"";position:absolute;left:9px;top:0;bottom:0;width:1px;background:rgba(160,60,60,.28)}
+.card-opt:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.22)}
+.card-opt input{position:absolute;opacity:0;pointer-events:none}
+.card-opt .co-t{display:block;font-size:15px;margin-left:8px}
+.card-opt .co-s{display:block;font-family:var(--sans);font-size:10.5px;color:var(--ink-soft);margin-left:8px;margin-top:3px}
+.card-opt:has(input:checked){border-color:var(--oxblood);
+  box-shadow:0 0 0 1px var(--oxblood),0 8px 20px rgba(0,0,0,.20)}
+
+.params{height:100%;padding:14px 16px;border-radius:10px;
+  background:linear-gradient(rgba(255,252,244,.80),rgba(255,252,244,.80)),
+    repeating-linear-gradient(rgba(0,0,0,0) 0 21px,rgba(80,110,150,.13) 21px 22px);
+  border:1px solid rgba(124,45,45,.5);
+  display:flex;flex-direction:column;justify-content:space-between}
+.params .pr-t{font-size:17px}
+.params .pr-l{font-family:var(--sans);font-size:11.5px;color:var(--ink-soft);margin-top:4px;line-height:1.55}
+.params .pr-b{align-self:flex-start;margin-top:8px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  padding:13px 22px;border:none;border-radius:11px;cursor:pointer;
+  font-family:var(--sans);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#f4e7d2;
+  background:linear-gradient(180deg,var(--oxblood-lit),var(--oxblood));
+  box-shadow:0 8px 22px rgba(124,45,45,.38),inset 0 1px 0 rgba(255,255,255,.20);
+  transition:transform .2s var(--ease),box-shadow .2s,opacity .2s}
+.btn:hover:not(:disabled){transform:translateY(-2px);
+  box-shadow:0 12px 28px rgba(124,45,45,.5),inset 0 1px 0 rgba(255,255,255,.22)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink-soft);border:1px solid rgba(42,32,24,.26);box-shadow:none}
+.btn.ghost:hover{box-shadow:none;border-color:var(--ink-soft)}
+.btn.small{padding:9px 14px;font-size:10px}
+
+/* ── Solo practice entry ───────────────────────────────────────────────── */
+.solo-block{margin-top:20px}
+.solo-rule{display:flex;align-items:center;gap:12px;margin-bottom:12px;
+  font-family:var(--sans);font-size:9.5px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--ink-soft)}
+.solo-rule::before,.solo-rule::after{content:"";flex:1;height:1px;background:rgba(42,32,24,.16)}
+.solo-rule.tight{margin-top:18px}
+.solo-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.solo-actions{margin-top:12px}
+.filter-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.filter-label{
+  font-family:var(--sans);font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink-soft);min-width:66px;
+}
+.filter-row .level{padding:6px 9px;font-size:9px}
+.solo-note{font-size:12px;line-height:1.5}
+.levels{display:flex;gap:5px}
+.level{
+  font-family:var(--sans);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  padding:8px 11px;border-radius:7px;cursor:pointer;color:var(--ink-soft);
+  background:transparent;border:1px solid rgba(42,32,24,.22);
+  transition:border-color var(--t-fast) var(--ease-soft),color var(--t-fast) var(--ease-soft);
+}
+.level:hover{border-color:var(--ink-soft)}
+.level.on{background:rgba(179,146,79,.16);border-color:var(--brass);color:var(--ink)}
+.solo-go{margin-left:auto}
+.level[aria-pressed="true"]:last-child,
+.filter-row .level.on:last-child{}
+/* hell reads as a warning, not just another tier */
+.levels .level:last-child.on{background:rgba(124,45,45,.22);border-color:var(--oxblood);
+  color:var(--oxblood);font-weight:600}
+.hell-note{margin-top:10px;padding:9px 11px;border-radius:8px;font-size:12.5px;
+  background:rgba(124,45,45,.12);border:1px solid rgba(124,45,45,.4)}
+.solo-note{margin-top:10px;font-size:12.5px;opacity:.8}
+
+.seeking{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding-top:6px}
+.search-ring{width:44px;height:44px;border-radius:50%;
+  border:2px solid rgba(124,45,45,.25);border-top-color:var(--oxblood);
+  animation:ring 1s linear infinite}
+@keyframes ring{to{transform:rotate(360deg)}}
+
+/* ── Decal ─────────────────────────────────────────────────────────────── */
+.decal-idle{height:100%;display:flex;align-items:center;justify-content:space-between;gap:28px}
+.di-mark{font-family:var(--sans);font-size:10px;letter-spacing:.4em;text-transform:uppercase;
+  color:var(--ink-soft);white-space:nowrap}
+.ticker{flex:1;overflow:hidden;position:relative;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.ticker-row{display:flex;gap:36px;width:max-content;animation:slide 30s linear infinite}
+.zone:hover .ticker-row,.zone.is-focus .ticker-row{animation-play-state:paused}
+@keyframes slide{to{transform:translateX(-50%)}}
+.tick{font-size:14.5px;color:var(--ink);opacity:.8;white-space:nowrap}
+.tick b{color:var(--oxblood);font-weight:600}
+
+/* ── Session history ───────────────────────────────────────────────────── */
+.hist-top{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;margin:10px 0 12px}
+.hist-confirm{display:flex;align-items:center;gap:8px;font-family:var(--sans);
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--oxblood)}
+.danger-text{color:var(--oxblood) !important;border-color:var(--oxblood) !important}
+.hist-list{display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow:auto;
+  scrollbar-width:thin;scrollbar-color:rgba(124,45,45,.4) transparent}
+.hist{position:relative;border:1px solid rgba(42,32,24,.18);border-radius:9px;
+  background:rgba(255,252,244,.5)}
+.hist.open{border-color:rgba(124,45,45,.4);background:rgba(255,252,244,.72)}
+.hist-row{display:grid;grid-template-columns:84px 1fr auto 46px;align-items:center;gap:10px;
+  width:100%;text-align:left;cursor:pointer;background:transparent;border:none;
+  padding:10px 34px 10px 12px;font-family:var(--serif);font-size:14.5px;color:var(--ink)}
+.h-when{font-family:var(--sans);font-size:10px;letter-spacing:.1em;color:var(--ink-soft)}
+.h-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h-score{font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+.h-pct{font-family:var(--sans);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.h-pct.good{color:#2f6b3f}.h-pct.ok{color:#8a6c33}.h-pct.bad{color:var(--oxblood)}
+.hist-del{position:absolute;right:8px;top:9px;background:transparent;border:none;cursor:pointer;
+  color:rgba(42,32,24,.35);font-size:12px;line-height:1;padding:4px}
+.hist-del:hover{color:var(--oxblood)}
+.hist-detail{padding:4px 12px 12px;border-top:1px solid rgba(42,32,24,.12)}
+.hist-meta{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 10px;
+  font-family:var(--sans);font-size:11px;color:var(--ink-soft)}
+.hist-weak{margin:0 0 10px;font-size:13.5px;color:var(--oxblood)}
+.hist-detail .st-row{grid-template-columns:1fr 64px 34px 40px;font-size:12.5px}
+.hist-detail .st-key{color:var(--ink)}
+.hist-detail .st-track{background:rgba(42,32,24,.12)}
+.hist-detail .st-n,.hist-detail .st-pct{color:var(--ink-soft)}
+.hist-mods{margin-top:10px;border-top:1px solid rgba(42,32,24,.12);padding-top:8px}
+.hist-mods .mod-row{font-size:13px;color:var(--ink)}
+.hist-mods .mod-row b{color:var(--oxblood)}
+
+.slips{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+.slip{padding:14px 15px;border-radius:8px;
+  background:linear-gradient(rgba(255,252,244,.76),rgba(255,252,244,.76)),
+    repeating-linear-gradient(rgba(0,0,0,0) 0 20px,rgba(80,110,150,.15) 20px 21px);
+  border:1px solid rgba(42,32,24,.18);box-shadow:0 6px 16px rgba(0,0,0,.20)}
+.slip:nth-child(odd){transform:rotate(-.7deg)}
+.slip:nth-child(even){transform:rotate(.6deg)}
+.slip .s-when{font-family:var(--sans);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
+.slip .s-line{font-size:16px;margin-top:5px}
+.slip .s-delta{font-family:var(--sans);font-size:12px;margin-top:7px}
+.up{color:#2f6b3f}.down{color:var(--oxblood)}
+
+/* ── Board ─────────────────────────────────────────────────────────────── */
+/* tighter padding on the two short strips so their content actually fits */
+.zone:not(.is-open) .panel{padding:14px 22px}
+.rat-row{display:flex;gap:clamp(20px,3.4vw,44px);align-items:center;height:100%;flex-wrap:nowrap}
+.rat{display:flex;flex-direction:column;gap:1px;min-width:0}
+.rat .r-k{font-family:var(--sans);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--ink-soft);white-space:nowrap}
+.rat .r-v{font-size:clamp(22px,2.1vw,29px);line-height:1.12;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.rat .r-n{font-family:var(--sans);font-size:10.5px;color:var(--ink-soft);white-space:nowrap}
+.rat-row .spacer{flex:1}
+.standing{animation:breathe var(--breath) ease-in-out infinite}
+@keyframes breathe{
+  0%,100%{text-shadow:0 0 0 rgba(216,184,119,0)}
+  50%{text-shadow:0 0 18px rgba(216,184,119,.55)}
+}
+.lb-tabs{display:flex;gap:8px;margin:4px 0 6px}
+.lb-tab{font-family:var(--sans);font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  padding:7px 13px;border-radius:8px;cursor:pointer;color:var(--ink-soft);
+  background:transparent;border:1px solid rgba(42,32,24,.22)}
+.lb-tab.on{background:rgba(124,45,45,.12);border-color:var(--oxblood);color:var(--ink)}
+table.lb{width:100%;border-collapse:collapse;margin-top:6px;font-size:15px}
+table.lb th{font-family:var(--sans);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--ink-soft);text-align:left;font-weight:500;padding:8px 10px;
+  border-bottom:1px solid rgba(42,32,24,.20)}
+table.lb td{padding:7px 10px;border-bottom:1px solid rgba(42,32,24,.09)}
+table.lb tr.me td{background:rgba(124,45,45,.09);font-weight:600}
+table.lb td.num{font-variant-numeric:tabular-nums}
+.rank{color:var(--brass);font-size:13px;width:34px}
+
+/* ── Pill ──────────────────────────────────────────────────────────────── */
+.zone#z-pill{}
+.zone:not(.is-open) .pill-idle{display:flex;flex-direction:column;align-items:center;gap:14px;
+  height:100%;justify-content:center}
+.pill-idle .dot{width:9px;height:9px;border-radius:50%;background:#4e8b5f;
+  animation:bloom var(--breath) ease-in-out infinite}
+.pill-idle .dot.off{background:var(--oxblood);animation:none;box-shadow:0 0 8px rgba(124,45,45,.6)}
+@keyframes bloom{
+  0%,100%{box-shadow:0 0 6px 1px rgba(78,139,95,.45);opacity:.55}
+  50%{box-shadow:0 0 18px 6px rgba(78,139,95,.55);opacity:1}
+}
+.pill-idle .n{font-size:29px;line-height:1}
+.pill-idle .lbl{font-family:var(--sans);font-size:9.5px;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--ink-soft);writing-mode:vertical-rl}
+/* the open pill needs a determinate height for the scroll viewport to fill */
+.zone.is-open .only-open{height:100%;display:flex;flex-direction:column}
+/* min-height, not min-height:0 — with flex:1 alone the header/footer siblings
+   can consume the whole column and starve the list to zero height. */
+.who-viewport{overflow:hidden;position:relative;margin-top:6px;flex:1 1 auto;min-height:150px;
+  cursor:grab;touch-action:none;
+  -webkit-mask-image:linear-gradient(transparent,#000 6%,#000 94%,transparent);
+  mask-image:linear-gradient(transparent,#000 6%,#000 94%,transparent)}
+.who-viewport:active{cursor:grabbing}
+.who{display:flex;flex-direction:column;will-change:transform}
+.who-r{display:flex;align-items:center;gap:11px;padding:9px 4px;border-bottom:1px solid rgba(42,32,24,.09)}
+.who-r .st{width:7px;height:7px;border-radius:50%;flex:none}
+.st.q{background:var(--brass)}.st.d{background:var(--oxblood)}.st.i{background:rgba(42,32,24,.24)}
+.who-r .nm{flex:1;font-size:15px}
+.who-r .mt{font-family:var(--sans);font-size:10.5px;color:var(--ink-soft);letter-spacing:.06em}
+.drag-hint{font-family:var(--sans);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--ink-soft);opacity:.7;margin-top:8px;text-align:center}
+
+/* ── Fixed overlays ────────────────────────────────────────────────────── */
+.vignette{position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;
+  background:radial-gradient(85% 80% at 50% 46%,transparent 52%,rgba(8,6,4,.62) 100%);
+  transition:opacity .5s ease}
+body.focused .vignette{opacity:1}
+
+.fog{position:fixed;left:-10%;right:-10%;bottom:-12%;height:38%;pointer-events:none;z-index:55}
+.fog i{position:absolute;bottom:0;width:60%;height:100%;border-radius:50%;
+  background:radial-gradient(50% 60% at 50% 100%,rgba(226,212,183,.10),transparent 70%)}
+.fog i:nth-child(1){left:-6%;animation:fogA 34s ease-in-out infinite alternate}
+.fog i:nth-child(2){left:38%;height:82%;animation:fogA 47s ease-in-out infinite alternate-reverse}
+.fog i:nth-child(3){left:66%;height:64%;animation:fogA 28s ease-in-out infinite alternate}
+@keyframes fogA{from{transform:translateX(0)}to{transform:translateX(9%)}}
+
+/* REMOVED: the animated full-screen film grain.
+   MEASURED at 1.33 screens of soft-light blending EVERY frame, re-blended on
+   each of its 1.1s steps, for an effect at 9% opacity sitting on top of an
+   already-textured background. Indefensible cost for what it bought. The
+   static .bg-grain texture inside the stage carries the analog feel now. */
+.scan{position:fixed;inset:0;pointer-events:none;z-index:58;opacity:.05;
+  background:repeating-linear-gradient(rgba(255,255,255,.5) 0 1px,transparent 1px 3px)}
+
+.hint-bar{position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:70;
+  font-family:var(--sans);font-size:10px;letter-spacing:.24em;text-transform:uppercase;
+  color:rgba(228,214,186,.32);pointer-events:none;transition:opacity .4s ease}
+body.focused .hint-bar{opacity:0}
+
+/* max-width is load-bearing: without it the tip lays out as one long line,
+   overflows the viewport and gets clamped hard against the left edge */
+.tooltip{position:fixed;z-index:90;pointer-events:none;max-width:260px;
+  font-family:var(--serif);font-size:13px;line-height:1.45;color:var(--paper-lit);
+  background:rgba(24,19,14,.94);border:1px solid var(--brass-lit);border-radius:9px;padding:9px 12px;
+  box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 0 0 1px rgba(216,184,119,.18)}
+.tooltip .tt-k{display:block;font-family:var(--sans);font-size:9px;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--brass-lit);margin-bottom:4px}
+[data-tip]{cursor:help}
+
+.hud{position:fixed;right:14px;bottom:14px;z-index:80;
+  font-family:var(--sans);font-size:10.5px;letter-spacing:.05em;
+  background:rgba(20,16,12,.72);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border:1px solid rgba(179,146,79,.26);border-radius:10px;padding:9px 11px;
+  color:rgba(228,214,186,.72);display:flex;flex-direction:column;gap:6px;min-width:172px}
+.hud .fps{display:flex;justify-content:space-between;align-items:baseline}
+.hud .fps b{font-size:17px;color:var(--brass-lit);font-variant-numeric:tabular-nums;font-weight:500}
+.hud label{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
+.hud input{accent-color:var(--brass);margin:0}
+.hud .sep{height:1px;background:rgba(179,146,79,.20);margin:1px 0}
+
+.gate{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(120% 90% at 50% 10%,#2c2318 0%,#1d1710 45%,#14100c 100%)}
+.gate-card{width:min(420px,100%);background:var(--panel-bg);
+  -webkit-backdrop-filter:var(--panel-blur);backdrop-filter:var(--panel-blur);
+  border:1px solid rgba(179,146,79,.5);border-radius:16px;padding:26px 28px;color:var(--ink);
+  box-shadow:0 26px 70px rgba(0,0,0,.6)}
+.gate-title{margin:0 0 6px;font-size:26px;font-weight:500}
+.gate-sub{margin:0 0 16px;font-size:14px;color:var(--ink-soft)}
+.gate-card .input{margin-bottom:14px}
+.gate-card .btn{width:100%}
+
+.conn-toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:95;
+  font-family:var(--sans);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  background:rgba(124,45,45,.92);color:#f4e7d2;border-radius:999px;padding:9px 18px;
+  box-shadow:0 8px 24px rgba(0,0,0,.5)}
+
+.chroma{animation:chroma .4s ease-out 1}
+@keyframes chroma{
+  0%{text-shadow:-2px 0 rgba(255,80,80,.75),2px 0 rgba(96,170,255,.75)}
+  55%{text-shadow:-1px 0 rgba(255,80,80,.35),1px 0 rgba(96,170,255,.35)}
+  100%{text-shadow:none}
+}
+
+/* ── Software-rendering mode ───────────────────────────────────────────────
+   Applied when Chromium is compositing on the CPU. Everything that costs a
+   full-surface readback or re-raster per frame goes: backdrop blur, the
+   promoted parallax layers, fog, scanlines, and the panel tilt. The paper
+   collage, crest, decor, dimming and camera all survive, so it still looks
+   like the same hall — it just stops asking the CPU to blur it. */
+body.perf-low .panel{
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  background:rgba(232,221,196,.97);
+}
+body.perf-low .hud{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(20,16,12,.94)}
+body.perf-low .gate-card{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(232,221,196,.97)}
+body.perf-low .plax{will-change:auto}
+body.perf-low .fog,
+body.perf-low .scan{display:none}
+body.perf-low .scrap,
+body.perf-low .watermark .wm-spin,
+body.perf-low .crest .wreath svg{animation:none}
+/* the zone glow is a large blurred gradient redrawn on every focus change */
+body.perf-low .zglow{display:none}
+body.perf-low .sheen{display:none}
+
+/* ── Escape hatches ────────────────────────────────────────────────────── */
+body.no-blur .panel{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(230,218,193,.97)}
+body.no-blur .hud{-webkit-backdrop-filter:none;backdrop-filter:none}
+body.no-ambient .scrap,
+body.no-ambient .watermark .wm-spin,
+body.no-ambient .crest .wreath svg,
+body.no-ambient .ticker-row,
+body.no-ambient .pill-idle .dot,
+body.no-ambient .wax,
+body.no-ambient .standing,
+body.no-ambient .fog i{animation:none}
+body.no-ambient .fog,body.no-ambient .scan{display:none}
+body.no-ambient .bg-grain{opacity:.12}
+
+@media (prefers-reduced-motion:reduce){
+  .scrap,.watermark .wm-spin,.crest .wreath svg,.ticker-row,.pill-idle .dot,
+  .wax,.standing,.fog i,.search-ring{animation:none}
+  .fog{display:none}
+  .zone,.flip-inner{transition:none}
+  .only-open{animation:none !important}
+  .sheen{display:none}
+}
