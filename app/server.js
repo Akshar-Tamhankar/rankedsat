@@ -327,8 +327,34 @@ function soloPoolFiltered(s) {
     q.section === s.section &&
     (f.difficulty === 'mixed' || q.difficulty === f.difficulty) &&
     (f.type === 'any' || q.type === f.type) &&
+    (f.domain === 'any' || q.domain === f.domain) &&
     (f.age === 'any'
       || (f.age === 'new' ? q.batch === newest : q.batch !== newest)));
+}
+
+/**
+ * Domains actually present in the loaded bank, with counts, per section.
+ * Derived from the bank rather than hardcoded so it cannot drift when
+ * College Board revises the taxonomy in a future export.
+ */
+let _domainMeta = null;
+function domainMeta() {
+  if (!_domainMeta) {
+    const acc = { ela: new Map(), math: new Map() };
+    for (const q of BANK.questions) {
+      const m = acc[q.section];
+      if (!m || !q.domain) continue;
+      const e = m.get(q.domain) || { domain: q.domain, count: 0, skills: new Set() };
+      e.count++;
+      if (q.skill) e.skills.add(q.skill);
+      m.set(q.domain, e);
+    }
+    const shape = (m) => [...m.values()]
+      .sort((a, b) => b.count - a.count)
+      .map(e => ({ domain: e.domain, count: e.count, skills: [...e.skills].sort() }));
+    _domainMeta = { ela: shape(acc.ela), math: shape(acc.math) };
+  }
+  return _domainMeta;
 }
 
 function soloServeOne(s) {
@@ -1202,6 +1228,12 @@ app.get('/api/decor', (req, res) => {
   res.json(out);
 });
 
+// Domains available for the practice filters, with counts, straight from the
+// loaded bank. Carries no question content, so it needs no access gate.
+app.get('/api/meta', (req, res) => {
+  res.json(domainMeta());
+});
+
 app.get('/api/leaderboard', (req, res) => {
   if (!hasValidCode(req)) return res.status(401).json({ error: 'This beta is invite-only.' });
   const board = {};
@@ -1339,6 +1371,10 @@ io.on('connection', (socket) => {
       difficulty: ['easy', 'medium', 'hard', 'hell'].includes(p.difficulty) ? p.difficulty : 'mixed',
       type: ['mcq', 'spr'].includes(p.type) ? p.type : 'any',
       age: ['new', 'original'].includes(p.age) ? p.age : 'any',
+      // Validated against the bank so a stale client can't request a domain
+      // that no longer exists and end up with an empty pool.
+      domain: (p.domain && domainMeta()[section]
+        && domainMeta()[section].some(d => d.domain === p.domain)) ? p.domain : 'any',
     };
 
     const s = {

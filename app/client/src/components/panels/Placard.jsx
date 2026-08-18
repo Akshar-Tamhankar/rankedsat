@@ -15,6 +15,19 @@ const TERMS = {
 };
 
 
+// College Board's domain names are long enough to wreck a compact filter row,
+// so each gets a short label. Keyed by the exact bank value.
+const DOMAIN_SHORT = {
+  'Algebra': 'Algebra',
+  'Advanced Math': 'Advanced',
+  'Problem-Solving and Data Analysis': 'Data analysis',
+  'Geometry and Trigonometry': 'Geometry & trig',
+  'Information and Ideas': 'Info & ideas',
+  'Craft and Structure': 'Craft',
+  'Expression of Ideas': 'Expression',
+  'Standard English Conventions': 'Conventions',
+};
+
 function FilterRow({ label, value, onChange, opts }) {
   return (
     <div className="filter-row">
@@ -45,7 +58,21 @@ export default function Placard({ game, isOpen }) {
   // ended up below the fold of a scrolling panel and were simply not findable.
   const [tab, setTab] = useState('duel');
   const [studySection, setStudySection] = useState('ela');
+  const [domain, setDomain] = useState('any');
+  const [meta, setMeta] = useState(null);
   const rippleRef = useRef(null);
+
+  // Domain list comes from the bank, so it can't drift from the data.
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/meta').then((r) => (r.ok ? r.json() : null))
+      .then((m) => { if (alive && m) setMeta(m); })
+      .catch(() => { /* filter just stays on "any" */ });
+    return () => { alive = false; };
+  }, []);
+
+  // Domains are section-specific, so switching section invalidates the choice.
+  useEffect(() => { setDomain('any'); }, [studySection]);
 
   useEffect(() => { setDraft(game.name || ''); }, [game.name]);
 
@@ -70,6 +97,7 @@ export default function Placard({ game, isOpen }) {
       difficulty: level,
       type: qtype,
       age,
+      domain,
       feedback: answers,
       ...extra,
     });
@@ -194,9 +222,19 @@ export default function Placard({ game, isOpen }) {
               <div className="solo-block">
                 <FilterRow label="Section" value={studySection} onChange={setStudySection}
                   opts={[['ela', 'Reading & Writing'], ['math', 'Math']]} />
+                {/* Topic filter, built from whatever the bank actually holds. */}
+                {meta && meta[studySection] && meta[studySection].length > 0 && (
+                  <FilterRow label="Topic" value={domain} onChange={setDomain}
+                    opts={[['any', 'all topics'],
+                      ...meta[studySection].map((d) => [
+                        d.domain,
+                        `${DOMAIN_SHORT[d.domain] || d.domain} (${d.count})`,
+                      ])]} />
+                )}
+
                 <FilterRow label="Difficulty" value={level} onChange={setLevel}
                   opts={[['mixed', 'mixed'], ['easy', 'easy'], ['medium', 'medium'],
-                    ['hard', 'hard'], ['hell', 'hell']]} />
+                    ['hard', 'hard'], ['hell', '🔥 hell']]} />
                 <FilterRow label="Type" value={qtype} onChange={setQtype}
                   opts={[['any', 'any'], ['mcq', 'multiple choice'], ['spr', 'grid-in']]} />
                 <FilterRow label="Content" value={age} onChange={setAge}
@@ -227,10 +265,11 @@ export default function Placard({ game, isOpen }) {
 
                 {level === 'hell' && (
                   <p className="p-sub hell-note">
-                    <b>Hell</b> is the 100 hardest questions in the bank — the worst 50
-                    of each section — ranked by our own scoring (grid-ins, long
-                    multi-step rationales, figures), not by College Board, who publish
-                    only three tiers. Section and type filters don&apos;t apply.
+                    <b>Hell</b> is the 100 hardest questions in the bank, the worst 50
+                    from each section, ranked by our own scoring: grid-ins first (no
+                    choices to eliminate), then long multi-step explanations, then
+                    figures. College Board only publishes three tiers, so this ranking
+                    is ours, not theirs. Section, topic and type filters do not apply.
                   </p>
                 )}
 
