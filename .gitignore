@@ -27,3 +27,6 @@ dist-desktop/
 
 # Practice session history is personal state, like players.json
 data/sessions.json*
+
+# Local editor/agent settings, not project config
+.claude/
