@@ -10,14 +10,22 @@ host yourself.
 
 ## Download
 
-Grab the latest build from the [Releases](../../releases) page.
+### → **[Get the latest release](../../releases/latest)** ←
+
+Everything is on that one page. Pick the file for your machine:
 
 | Platform | File | Notes |
 | --- | --- | --- |
-| **Windows** | `RankedSat-Setup-<version>-x64.exe` | Installer. Creates a Start-menu and desktop shortcut. |
+| **Windows** | `RankedSat-Setup-<version>-x64.exe` | Installer. Creates a Start-menu and desktop shortcut. **Start here.** |
 | **Windows (portable)** | `RankedSat-Portable-<version>-x64.exe` | Single file, no install. Runs from a USB stick. |
-| **macOS (Apple Silicon)** | `RankedSat-<version>-arm64.dmg` | M1/M2/M3/M4 Macs. |
-| **macOS (Intel)** | `RankedSat-<version>-x64.dmg` | Intel Macs. |
+| **macOS (Apple Silicon)** | `RankedSat-<version>-arm64.dmg` | M1/M2/M3/M4. Most Macs since 2020. |
+| **macOS (Intel)** | `RankedSat-<version>-x64.dmg` | Pre-2020 Intel Macs. |
+
+Not sure which Mac you have? Apple menu → **About This Mac**. "Apple M-something"
+means arm64; "Intel" means x64.
+
+Nothing else to install — Node, the question bank, and all 8,700+ figures are
+bundled inside the app.
 
 ### First launch on macOS
 
@@ -156,6 +164,17 @@ Two things to set in production:
 | `RANKEDSAT_QUESTIONS` | Path to `questions.jsonl`. |
 | `RANKEDSAT_FIGURES` | Path to the figures directory. |
 | `FIREBASE_SERVICE_ACCOUNT` | Service-account JSON; switches storage to Firestore. |
+
+---
+
+## Found this useful?
+
+A ⭐ on the repo helps other people find it, and following along means you'll
+see new releases as they land. Both are genuinely appreciated.
+
+Bug reports and ideas are welcome in [Issues](../../issues) — particularly
+questions that render badly, since maths comes out of the source PDF as
+artwork and the odd one still slips through.
 
 ---
 
