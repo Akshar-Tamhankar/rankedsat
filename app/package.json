@@ -1,6 +1,6 @@
 {
   "name": "rankedsat",
-  "version": "0.3.0",
+  "version": "0.3.3",
   "private": true,
   "description": "RankedSat — 1v1 ranked SAT duels and solo study. Express + socket.io server, React client, Electron desktop shell.",
   "main": "electron/main.js",
