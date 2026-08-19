@@ -29,13 +29,33 @@ inside the app.
 
 ### First launch
 
-The builds are **not code-signed**, because signing certificates cost money
-and this is a free project. Your OS will complain once:
+The builds are **not code-signed**, because an Apple Developer certificate
+costs money and this is a free project. Your OS will complain once.
 
-* **macOS:** right-click the app, choose **Open**, then **Open** again in the
-  dialog. Only needed the first time.
-* **Windows:** SmartScreen may say "unrecognised publisher". Choose
-  **More info**, then **Run anyway**.
+#### macOS
+
+You will likely see **"RankedSat is damaged and can't be opened."** The app is
+not damaged. macOS says that about any app it cannot verify, which is
+misleading but is what it does.
+
+Drag the app to Applications first, then run this in Terminal:
+
+```bash
+xattr -cr /Applications/RankedSat.app
+```
+
+That clears the quarantine flag macOS adds to downloaded files. Open the app
+normally afterwards. You only ever need to do it once.
+
+If you would rather not use Terminal, try **System Settings**, then
+**Privacy & Security**, scroll down, and click **Open Anyway** next to the
+message about RankedSat. On older macOS versions, right-clicking the app and
+choosing **Open** also works, but Apple removed that shortcut in Sequoia.
+
+#### Windows
+
+SmartScreen may say "unrecognised publisher". Choose **More info**, then
+**Run anyway**.
 
 ---
 

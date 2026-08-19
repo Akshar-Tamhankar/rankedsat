@@ -51,11 +51,23 @@ jobs:
 
       - name: Build desktop app
         working-directory: app
-        # Unsigned builds: no Apple Developer account. Users right-click →
-        # Open on first launch (documented in the README).
+        # No Apple Developer certificate, so electron-builder does not sign.
+        # electron/afterPack.js then AD-HOC signs the macOS app, which is
+        # mandatory on Apple Silicon: an entirely unsigned arm64 binary will
+        # not load at all and macOS reports it as "damaged". See that file.
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npm run ${{ matrix.script }}
+
+      - name: Verify macOS app is signed and loadable
+        if: matrix.os == 'macos-latest'
+        # Catch a broken dmg here rather than after someone downloads it.
+        run: |
+          set -e
+          for app in dist-desktop/mac*/RankedSat.app; do
+            echo "checking $app"
+            codesign --verify --verbose=2 "$app"
+          done
 
       - uses: actions/upload-artifact@v4
         with:
@@ -91,6 +103,20 @@ jobs:
             | macOS (Apple Silicon) | `RankedSat-*-arm64.dmg` |
             | macOS (Intel) | `RankedSat-*-x64.dmg` |
 
-            Builds are unsigned. On macOS, right-click the app → **Open** the
-            first time. On Windows, choose **More info → Run anyway** if
-            SmartScreen appears.
+            ### First launch
+
+            These builds are not code-signed (no Apple Developer certificate).
+
+            **macOS** will say the app is *"damaged and can't be opened"*. It
+            is not damaged; that is what macOS says about any app it cannot
+            verify. Drag it to Applications, then run:
+
+            ```
+            xattr -cr /Applications/RankedSat.app
+            ```
+
+            Or use **System Settings → Privacy & Security → Open Anyway**.
+            Either way, once only.
+
+            **Windows**: SmartScreen may warn about an unrecognised publisher.
+            Choose **More info → Run anyway**.

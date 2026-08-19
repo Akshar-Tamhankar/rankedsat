@@ -38,6 +38,7 @@
     "directories": {
       "output": "../dist-desktop"
     },
+    "afterPack": "electron/afterPack.js",
     "files": [
       "electron/**",
       "server.js",
@@ -90,7 +91,10 @@
         }
       ],
       "category": "public.app-category.education",
-      "artifactName": "RankedSat-${version}-${arch}.${ext}"
+      "artifactName": "RankedSat-${version}-${arch}.${ext}",
+      "identity": null,
+      "notarize": false,
+      "gatekeeperAssess": false
     },
     "linux": {
       "target": [
